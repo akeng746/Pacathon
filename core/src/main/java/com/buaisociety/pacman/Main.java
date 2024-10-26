@@ -115,7 +115,7 @@ public class Main extends ApplicationAdapter {
             }
             NeatImpl impl = NeatImpl.fromJson(json);
             // modify this as needed
-            //impl.updateNodeCounts(8, 4);  // Add 4 new inputs
+            impl.updateNodeCounts(8, 4);  // Add 4 new inputs
             //impl.updateClients(200);  // have 200 pacman games at once
             return impl;
         } else {
@@ -125,7 +125,7 @@ public class Main extends ApplicationAdapter {
             neatParameters.setTargetClientsPerSpecies(12);  // targeting ~12 clients per species
             neatParameters.setStagnationLimit(10);  // lower stagnation limit
             neatParameters.setUseBiasNode(true);  // use bias node
-            return new NeatImpl(4, 4, totalGames, neatParameters);
+            return new NeatImpl(8, 4, totalGames, neatParameters);
         }
     }
 

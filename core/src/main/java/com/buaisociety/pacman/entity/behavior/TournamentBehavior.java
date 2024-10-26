@@ -1,5 +1,6 @@
 package com.buaisociety.pacman.entity.behavior;
 
+//og imports 
 import com.buaisociety.pacman.entity.Direction;
 import com.buaisociety.pacman.entity.Entity;
 import com.buaisociety.pacman.entity.PacmanEntity;
@@ -7,6 +8,29 @@ import com.cjcrafter.neat.compute.Calculator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.buaisociety.pacman.maze.Maze;
+import com.buaisociety.pacman.maze.Tile;
+import com.buaisociety.pacman.maze.TileState;
+import com.buaisociety.pacman.sprite.DebugDrawing;
+import com.cjcrafter.neat.Client;
+import com.buaisociety.pacman.entity.Direction;
+import com.buaisociety.pacman.entity.Entity;
+import com.buaisociety.pacman.entity.PacmanEntity;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector2d;
+import org.joml.Vector2f;
+import org.joml.Vector2i;
+import org.joml.Vector2ic;
+import java.util.LinkedList;
+import java.util.*;
+import com.buaisociety.pacman.Searcher;
+import com.buaisociety.pacman.maze.Tile;
+import com.cjcrafter.neat.compute.Calculator;
+// import com.buaisociety.pacman.entity.behavior.NeatPacmanBehavior;
 public class TournamentBehavior implements Behavior {
 
     private final Calculator calculator;
@@ -49,8 +73,76 @@ public class TournamentBehavior implements Behavior {
 
         // TODO: Put all your code for info into the neural network here
 
+
+       //not NORMALIZING
+       //float distanceToNearestPellet = minDistance;
+       //float maxY = dimensions.y();
+       //float maxX = dimensions.x();
+       //float maxDistance = (float) Math.sqrt(Math.pow(maxX, 2) + Math.pow(maxY, 2));
+
+
+       //NORMALIZING
+       //float normalizedPelletX = nearestPelletX / dimensions.x();
+       //float normalizedPelletY = nearestPelletY / dimensions.y();
+       //float normalizedDistToNearestPellet = distanceToNearestPellet / maxDistance;
+
+
+       // END OF SPECIAL TRAINING CONDITIONS
+
+
+       // We are going to use these directions a lot for different inputs. Get them all once for clarity and brevity
+       Direction forward = pacman.getDirection();
+       Direction left = pacman.getDirection().left();
+       Direction right = pacman.getDirection().right();
+       Direction behind = pacman.getDirection().behind();
+
+
+       // Input nodes 1, 2, 3, and 4 show if the pacman can move in the forward, left, right, and behind directions
+       boolean canMoveForward = pacman.canMove(forward);
+       boolean canMoveLeft = pacman.canMove(left);
+       boolean canMoveRight = pacman.canMove(right);
+       boolean canMoveBehind = pacman.canMove(behind);
+
+
+       // input nodes show if the nearest pellet is forward, left, right, or behind
+       //boolean pelletIsForward = nearestPelletY < pacmanY;
+       //boolean pelletIsLeft = nearestPelletX < pacmanX;
+       //boolean pelletIsRight = nearestPelletX > pacmanX;
+       //boolean pelletIsBehind = nearestPelletY > pacmanY;
+
+
+       Tile currentTile = pacman.getMaze().getTile(pacman.getTilePosition());
+       Map<Direction, Searcher.SearchResult> nearestPellets = Searcher.findTileInAllDirections(currentTile, tile -> tile.getState() == TileState.PELLET);
+
+
+       int maxDistance = -1;
+       for (Searcher.SearchResult result : nearestPellets.values()) {
+           if (result != null) {
+               maxDistance = Math.max(maxDistance, result.getDistance());
+           }
+       }
+
+
+       float nearestPelletForward = nearestPellets.get(forward) != null ? (float)0.5 + (1 - ((float) nearestPellets.get(forward).getDistance() / maxDistance)) * 0.5f : (float)0.5;
+       float nearestPelletLeft = nearestPellets.get(left) != null ? (float)0.5 + (1 - ((float) nearestPellets.get(left).getDistance() / maxDistance)) * 0.5f : (float)0.5;
+       float nearestPelletRight = nearestPellets.get(right) != null ? (float)0.5 + (1 - ((float) nearestPellets.get(right).getDistance() / maxDistance)) * 0.5f : (float)0.5;
+       float nearestPelletBehind = nearestPellets.get(behind) != null ? (float)0.5 + (1 - ((float) nearestPellets.get(behind).getDistance() / maxDistance)) * 0.5f : (float)0.5;
+
+
         float[] inputs = new float[] {
-            // TODO: Add your inputs here
+            //pelletIsForward ? 1f : 0f,
+           //pelletIsLeft ? 1f : 0f,
+           //normalizedDistToNearestPellet,
+           //normalizedPelletX,
+           //normalizedPelletY,
+           canMoveForward ? 1f : 0f,
+           canMoveLeft ? 1f : 0f,
+           canMoveRight ? 1f : 0f,
+           canMoveBehind ? 1f : 0f,
+           nearestPelletForward,
+           nearestPelletLeft,
+           nearestPelletRight,
+           nearestPelletBehind
         };
         float[] outputs = calculator.calculate(inputs).join();
 
